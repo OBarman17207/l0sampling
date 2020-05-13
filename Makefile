@@ -16,5 +16,5 @@ $(EXES): %.exe : %.c $(DEPS)
 .PHONY: clean all
 
 clean:
-	\rm -f $(EXES)
-	\rm -f *.o
+	rm -f $(EXES)
+	
