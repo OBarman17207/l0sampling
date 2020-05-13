@@ -27,7 +27,7 @@ int64_t power(int a, int b){
   return result;
 }
 
-int random(int range){
+int randomize(int range){
   int inv_range = ((int) ((RAND_MAX)/range));
   int x = rand();
   while (x >= range*inv_range){
@@ -86,11 +86,50 @@ void setup_sparse_vector(struct one_sparse* s_sparse_table, int size){
   }
 }
 
+/* First approach to choosing on-sparse recovery soloution*/
+void update_one_sparse_recovery(struct one_sparse* one, int64_t index, int64_t delta_freq, int zeta, int prime){
+
+  if(prime == 0){
+    update_one_sparse_recovery_G(one, index, delta_freq);
+  }
+  else{
+    update_one_sparse_recovery_CF(one, index, delta_freq, zeta, prime);
+  }
+}
+
 /* Updates a one-sparse structure with an index and frequency */
-void update_one_sparse_recovery(struct one_sparse* one, int64_t index, int64_t delta_freq){
+/* Ganguly's soloution */
+void update_one_sparse_recovery_G(struct one_sparse* one, int64_t index, int64_t delta_freq){
   one->sum_of_weights += delta_freq;
   one->sum_of_identifiers += index*delta_freq;
   one->sum_of_fingerprints += index*index*delta_freq;
+}
+
+/* Updates a one-sparse structure with an index and frequency */
+/* Comorode and Firmani's soloution */
+void update_one_sparse_recovery_CF(struct one_sparse* one, int64_t index, int64_t delta_freq, int z, int p){
+
+
+  one->sum_of_weights += delta_freq;
+  one->sum_of_identifiers += index*delta_freq;
+  one->sum_of_fingerprints += ((delta_freq % p) * (power(z,index) % p)) % p;
+}
+
+bool test_one_sparse_recovery(struct one_sparse *one, int zeta, int prime){
+  if(prime == 0){
+    return test_one_sparse_recovery_G(one);
+  }
+  else{
+    return test_one_sparse_recovery_CF(one,zeta, prime);
+  }
+}
+
+bool test_one_sparse_recovery_CF(struct one_sparse *one, int z, int p){
+  return (one->sum_of_fingerprints == ((one->sum_of_weights % p) * (power(z, (one->sum_of_identifiers / one->sum_of_weights)) % p)) % p);
+}
+
+bool test_one_sparse_recovery_G(struct one_sparse *one){
+  return ((one->sum_of_fingerprints * one->sum_of_weights) == (one->sum_of_identifiers * one->sum_of_identifiers));
 }
 
 /* Updates a s-sparse structure for a specific level with an index and frequency
@@ -104,7 +143,7 @@ void update_s_sparse_recovery(int* hashtable, struct one_sparse* s_sparse_table,
     }
 
     int hashed_index = hash(row_hashtable, index, k, 2*s, prime);
-    update_one_sparse_recovery(&s_sparse_table[i*2*s + hashed_index], index, delta_freq);
+    update_one_sparse_recovery(&s_sparse_table[i*2*s + hashed_index], index, delta_freq, 0, 0);
   }
   free(row_hashtable);
 }
@@ -113,7 +152,7 @@ void update_s_sparse_recovery(int* hashtable, struct one_sparse* s_sparse_table,
 struct one_sparse* recover_one_sparse(struct one_sparse* one){
   //Checks if one is one-sparse
   if(one->sum_of_weights != 0){
-    if (((one->sum_of_fingerprints * one->sum_of_weights) == (one->sum_of_identifiers * one->sum_of_identifiers))){
+    if (test_one_sparse_recovery(one,0,0)){
       return one;
     }
   }
