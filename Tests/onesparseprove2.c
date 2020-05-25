@@ -1,4 +1,4 @@
-#include "l0sampler.h"
+#include "../l0sampler.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -21,7 +21,7 @@ int main(int argc, char const *argv[]) {
   printf("number of index should be %d\n", number_of_index);
 
   for(int i = 0; i < number_of_index; i++){
-    update_one_sparse_recovery(one_sparse_structure, (rand() % (array_size - 1) + 1), rand());
+    update_one_sparse_recovery(one_sparse_structure, (rand() % (array_size - 1) + 1), rand(),0,0);
 
   }
   if(recover_one_sparse(one_sparse_structure)->sum_of_weights != 0){

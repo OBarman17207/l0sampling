@@ -1,4 +1,4 @@
-#include "l0sampler.h"
+#include "../l0sampler.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -21,10 +21,10 @@ int main(int argc, char const *argv[]) {
   printf("recoverd index should be %d\n", random_index);
   for(int i = 0; i < array_size; i ++){
     if( i == random_index){
-      update_one_sparse_recovery(one_sprase_recovery, i, rand());
+      update_one_sparse_recovery(one_sprase_recovery, i, rand(),0,0);
     }
     else{
-      update_one_sparse_recovery(one_sprase_recovery, i, 0);
+      update_one_sparse_recovery(one_sprase_recovery, i, 0,0,0);
     }
   }
   print_one_sparse(recover_one_sparse(one_sprase_recovery));

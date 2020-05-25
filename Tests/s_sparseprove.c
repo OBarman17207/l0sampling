@@ -1,4 +1,4 @@
-#include "l0sampler.h"
+#include "../l0sampler.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -9,6 +9,8 @@
 #include <time.h>
 #include <unistd.h>
 
+//void update_s_sparse_recovery(int* hashtable, struct one_sparse* s_sparse_table, int index, int delta_freq, int level, int s, int r, int k, int prime);
+//struct one_sparse* recover_vector(struct one_sparse* s_sparse_table, int s, int r, int m);
 
 int main(int argc, char const *argv[]) {
   int k = atoi(argv[1]);
@@ -28,9 +30,9 @@ int main(int argc, char const *argv[]) {
     update_s_sparse_recovery(hashtable, s_sparse_structure, ((rand() % array_size) + 1), rand(), 0, s, r, k, prime);
 
   }
-  struct one_sparse* result = recover_vector(0, s_sparse_structure, s, r);
+  struct one_sparse* result = recover_vector(s_sparse_structure, s, r, 1);
   if(result){
-    print_one_sparse(recover_vector(0, s_sparse_structure, s, r));
+    print_one_sparse(recover_vector(s_sparse_structure, s, r, 1));
   }
 
 
