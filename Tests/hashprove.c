@@ -1,4 +1,5 @@
 #include "../l0sampler.h"
+#include "../count.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -16,34 +17,37 @@
 // hash and save value
 // repeat step 2 and 3
 // Should see a uniform random distribution
-int main(int argc, char const *argv[]) {
-   int k = atoi(argv[1]);
-   int u = atoi(argv[2]);
-   int m = atoi(argv[3]);
-   int runs = atoi(argv[4]);
-   int p = 4253;
-   if(p < u){
-     printf("bad value of prime\n");
-     return 1;
-   }
-   srand(time(0));
-   int index = u - 2;
+int hash_prove(int index, int k, int u, int m, int p) {
 
-   printf("k is %d\n",k);
    int* hashtable = malloc(sizeof(int)*k);
-   int* counttable = malloc(sizeof(int)*m);
+   hash_create(hashtable,k,p);
+   int value = hash(hashtable, index, k, m, p);
+   free(hashtable);
+   return value;
+}
 
-   for(int i = 0; i < m; i++){
-     counttable[i] = 0;
-   }
-   for(int i = 0; i < runs; i++){
-     hash_create(hashtable,k,p);
-     int value = hash(hashtable, index, k, m, p);
-     counttable[value] += 1;
-   }
-   for(int i = 0; i < m; i++){
-     printf("count of index %d is ", i);
-     printf("%d\n", counttable[i]);
-   }
-   return 0;
+int main(int argc, char const *argv[]) {
+  int k = atoi(argv[1]);
+  int u = atoi(argv[2]);
+  int m = atoi(argv[3]);
+  int runs = atoi(argv[4]);
+  int p = 4253;
+  int index = (rand() % u);
+  bool retry = false;
+
+  if(p < u){
+    printf("bad value of prime\n");
+    return 1;
+  }
+  srand(time(0));
+  struct count_object* count_struct = malloc(sizeof(struct count_object));
+  count_setup(count_struct, m, runs, retry);
+  while(count_struct->runs_left > 0){
+    int x = hash_prove(index,k,u,m,p);
+    increase_count(count_struct, x);
+  }
+  print_count(count_struct);
+  free(count_struct);
+
+  return 0;
 }

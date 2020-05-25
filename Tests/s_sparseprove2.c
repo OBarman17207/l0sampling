@@ -1,4 +1,5 @@
 #include "../l0sampler.h"
+#include "../count.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -38,29 +39,18 @@ int main(int argc, char const *argv[]) {
   int r = atoi(argv[3]);
   int runs = atoi(argv[4]);
   int array_size = atoi(argv[5]);
-  srand(time(0));
+  int size = array_size + 1;
   int prime = 1000187;
-  int* counttable = malloc(sizeof(int) * (array_size+1));
-  for(int i = 0; i < array_size + 1; i++){
-   counttable[i] = 0;
+  bool retry = false;
+  srand(time(0));
+  struct count_object* count_struct = malloc(sizeof(struct count_object));
+  count_setup(count_struct, size, runs, retry);
+  while(count_struct->runs_left > 0){
+    int x = s_sparse_test(k, s, r, prime, array_size);
+    increase_count(count_struct, x);
   }
+  print_count(count_struct);
+  free(count_struct);
 
-  for(int i = 0; i < runs; i++){
-    int value = s_sparse_test(k, s, r, prime, array_size);
-    if (value == 0){
-      i--;
-    }
-    else{
-      counttable[value] += 1;
-    }
-
-  }
-  int total = 0;
-  for(int i = 0; i < array_size + 1; i++){
-   printf("count of index %d is ", i);
-   printf("%d\n", counttable[i]);
-   total += counttable[i];
-  }
-  printf("total is %d\n",total);
   return 0;
 }

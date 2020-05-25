@@ -1,4 +1,5 @@
 #include "../l0sampler.h"
+#include "../count.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

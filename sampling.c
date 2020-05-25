@@ -24,8 +24,8 @@ int main(int argc, char const *argv[]) {
   struct count_object* count_struct = malloc(sizeof(struct count_object));
   count_setup(count_struct, size, runs, retry);
   while(count_struct->runs_left > 0){
-    int x = read_stream(r,s,k);
-    increase_count(count_struct,x);
+    int x = read_stream(k,s,r);
+    increase_count(count_struct, x);
   }
   print_count(count_struct);
   free(count_struct);

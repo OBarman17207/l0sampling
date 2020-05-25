@@ -1,4 +1,5 @@
 #include "../l0sampler.h"
+#include "../count.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -10,46 +11,41 @@
 #include <unistd.h>
 
 
-// define U and m for h:U->m and H a family of h
-// set a random index member of U
-// Choose random h
-// hash and save value
-// repeat step 2 and 3
-// Should see a uniform random distribution
+
 int main(int argc, char const *argv[]) {
+  int k = atoi(argv[1]);
+  int runs = 1;
   int u = 100;
   int m = 1000000;
   int total_level = (int) ((log(m)/log(2)) + 1);
-  printf("total_level %d\n",total_level);
   int p = 1000187;
+  bool retry = false;
+  if(p < u){
+    printf("bad value of prime\n");
+    return 1;
+  }
   srand(time(0));
-  //int index = (rand()) % u;
-  int k = atoi(argv[1]);
-  printf("k is %d\n",k);
-  int* hashtable = malloc(sizeof(int)*k);
-  int* counttable = malloc(sizeof(int)*total_level);
-  for(int i = 0; i < total_level; i++){
-   counttable[i] = 0;
-  }
-  hash_create(hashtable,k,p);
-  for(int i = 0; i < u; i++){
-   int value = hash(hashtable, i, k, m, p);
-   printf("hash is value %d\n", value);
-   for(int level = 0; level < total_level; level++){
-     //printf("hello");
-     if(index_in_level(level, value, m)){
-       counttable[level] += 1;
-     }
-   }
+  struct count_object* count_struct = malloc(sizeof(struct count_object));
+  count_setup(count_struct, total_level, runs, retry);
+  int* hashtable = malloc(sizeof(int) * k);
+  while(count_struct->runs_left > 0){
+    hash_create(hashtable,k,p);
+    for(int i = 0; i < u; i++){
+      int value = hash(hashtable, i, k, m, p);
+      printf("hash is value %d\n", value);
+      for(int level = 0; level < total_level; level++){
+       //printf("hello");
+        if(index_in_level(level, value, m)){
+          increase_count(count_struct, level);
+        }
+      }
+    }
 
-   //printf("value is %d\n",value);
+     //printf("value is %d\n",value);
   }
-  int total = 0;
-  for(int i = 0; i < total_level; i++){
-   printf("count of index %d is ", i);
-   printf("%d\n", counttable[i]);
-   total += counttable[i];
-  }
-  printf("total is %d\n",total);
+
+  print_count(count_struct);
+  free(count_struct);
+
   return 0;
 }
