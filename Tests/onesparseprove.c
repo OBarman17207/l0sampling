@@ -9,6 +9,14 @@
 #include <time.h>
 #include <unistd.h>
 
+//Objective: Testx if a one-sparse vector recovers successfull. This will be used as a building block for more comprehensive testing in onesparseprove2
+
+/* Setup: Define array of random size and choose a random index in that array to give a random non-zero frequency
+update the one sparse structure with all indices of the array and zero frequency except the randomly chosen index */
+
+/* Further notes: Though this tests these concepts experminetally there are two edge cases that it does not test. 
+  1. The order of indices stays the same between tests
+  2. All indices of the array are added into the one_sparse structure */
 
 int main(int argc, char const *argv[]) {
   struct one_sparse* one_sprase_recovery = malloc(sizeof(struct one_sparse));

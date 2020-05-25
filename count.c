@@ -1,4 +1,4 @@
-#include "l0sampler.h"
+#include "count.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -11,44 +11,39 @@
 
 
 
-int main(int argc, char const *argv[]) {
-  int k = atoi(argv[1]);
-  int s = atoi(argv[2]);
-  int r = atoi(argv[3]);
-  int n = atoi(argv[4]);
-  int runs = atoi(argv[5]);
-  int* frequency_range = malloc(sizeof(int) * (n+1));
-  for(int i = 0; i < n+1; i ++){
-    frequency_range[i] = 0;
+
+void count_setup(struct count_object* count_struct, int size, int runs, bool retry){
+  count_struct->size = size;
+  count_struct->total_runs = runs;
+  count_struct->runs_left = runs;
+  count_struct->retry = retry;
+  count_struct->count = malloc(sizeof(int) * size);
+  for(int i = 0; i < size; i ++){
+    count_struct->count[i] = 0;
   }
-  float mean = runs/n;
+}
+
+void increase_count(struct count_object* count_struct, int result){
+  if (!(result == 0 && count_struct->retry)){
+    (count_struct->count)[result] += 1;
+    count_struct->runs_left -= 1;
+  }
+}
+
+void print_count(struct count_object* count_struct){
+  float mean = count_struct->total_runs/(count_struct->size - 1);
   float sd = 0;
   int total = 0;
-  srand(time(0));
-  for(int i = 0; i < runs; i++){
 
-    int x = read_stream(k,s,r);
-    if ( x > 0){
-      frequency_range[x] += 1;
-    }
-    else{
-      i--;
-      runs++;
-    }
-
-  }
-
-
-  for(int i = 0; i < n+1; i ++){
+  for(int i = 0; i < count_struct->size; i ++){
     printf("count of index %d is ", i);
-    printf("%d\n", frequency_range[i]);
+    printf("%d\n", count_struct->count[i]);
     if( i > 0){
-      float f = (frequency_range[i] - mean);
+      float f = (count_struct->count[i] - mean);
       sd += pow(f, 2);
     }
-    total += frequency_range[i];
+    total += count_struct->count[i];
   }
-  printf("sd is %f\n", sqrt(sd/runs));
+  printf("sd is %f\n", sqrt(sd/count_struct->total_runs));
   printf("total is %d\n", total);
-  return 0;
 }

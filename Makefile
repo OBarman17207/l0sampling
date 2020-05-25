@@ -2,10 +2,9 @@
 # Makefile for sampling and count
 #
 
-EXE1=count.exe
-EXE2=sampling.exe
-EXES=$(EXE1) $(EXE2)
-DEPS=l0sampler.c
+EXE1=sampling.exe
+EXES=$(EXE1)
+DEPS=l0sampler.c count.c
 CFLAGS=-std=c99 -Wall
 
 all: $(EXES)
@@ -17,4 +16,3 @@ $(EXES): %.exe : %.c $(DEPS)
 
 clean:
 	rm -f $(EXES)
-	

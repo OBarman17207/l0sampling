@@ -259,9 +259,9 @@ int read_stream(int k, int s, int r) {
     //Recover an s-sparse vector
     struct one_sparse* final_vector = malloc(sizeof(struct one_sparse));
     final_vector = recover_vector(s_sparse_table, s, r, m);
+    free(s_sparse_table);
     if (final_vector){
       int result = (final_vector->sum_of_identifiers/final_vector->sum_of_weights);
-      free(s_sparse_table);
       free(final_vector);
       return result;
 
