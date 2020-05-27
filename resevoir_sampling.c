@@ -7,19 +7,18 @@
 #include <math.h>
 #include <stdbool.h>
 #include <time.h>
+#include "count.h"
 
 
-int resevoir_sample(int seed) {
+int resevoir_sample() {
   FILE* file;
   char* line = NULL;
   size_t len = 0;
-  srand(seed);
   file = fopen("TestFile.txt", "r");
-  //srand(seed);
   int result = 0;
   if (file) {
     if (getline(&line, &len, file) == -1){
-      printf("big error!!!!\n");
+      printf("no file found\n");
       return 0;
     }
     int current_size = 0;
@@ -38,25 +37,20 @@ int resevoir_sample(int seed) {
 }
 
 int main(int argc, char const *argv[]) {
-  int size = atoi(argv[1]);
+  int n = atoi(argv[1]);
   int runs = atoi(argv[2]);
-  int* result_count = malloc(sizeof(int)*(size + 1));
+  int size = n + 1;
+  bool retry = false;
   srand(time(0));
-
-  for(int i = 0; i < size + 1; i++){
-    result_count[i] = 0;
-  }
-  //printf("hello\n");
+  struct count_object* count_struct = malloc(sizeof(struct count_object));
+  count_setup(count_struct, size, runs, retry);
   for(int j = 0; j < runs; j++){
-    int result = resevoir_sample(rand());
+    int result = resevoir_sample();
     //printf("result is %d\n",result);
-    result_count[result] += 1;
+    increase_count(count_struct, result);
   }
-  int total = 0;
-  for(int i = 0; i < size + 1; i++){
-    printf("count of index %d is ", i);
-    printf("%d\n", result_count[i]);
-    total += result_count[i];
-  }
-  printf("total is %d\n",total);
+  print_count(count_struct);
+  free(count_struct);
+  return 0;
+
 }

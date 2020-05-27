@@ -3,7 +3,8 @@
 #
 
 EXE1=sampling.exe
-EXES=$(EXE1)
+EXE2=resevoir_sampling.exe
+EXES=$(EXE1) $(EXE2)
 DEPS=l0sampler.c count.c
 CFLAGS=-std=c99 -Wall
 
