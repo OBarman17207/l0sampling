@@ -32,7 +32,6 @@ int main(int argc, char const *argv[]) {
     hash_create(hashtable,k,p);
     for(int i = 0; i < u; i++){
       int value = hash(hashtable, i, k, m, p);
-      printf("hash is value %d\n", value);
       for(int level = 0; level < total_level; level++){
        //printf("hello");
         if(index_in_level(level, value, m)){

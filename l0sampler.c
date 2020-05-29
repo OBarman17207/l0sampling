@@ -19,10 +19,13 @@ void print_one_sparse(struct one_sparse* one){
   printf("%ld ", (one->sum_of_identifiers));
 }
 
-int64_t power(int a, int b){
+
+int64_t power_mod(int a, int b, int p){
   int64_t result = 1;
+  a = (a % p);
   for(int i = 0; i < b; i++){
     result *= a;
+    result = (result % p);
   }
   return result;
 }
@@ -65,35 +68,37 @@ int hash(int* hashtable, int index, int k, int buckets, int p){
 
   uint64_t hashed_index = 0;
   for (int i = 0; i < k; i++){
-    hashed_index += hashtable[i] * power(index,i);
+    hashed_index += ((hashtable[i] % p) * (power_mod(index,i,p)) % p);
+    hashed_index = hashed_index % p;
   }
 
   int result = hashed_index % p;
   result = result % buckets;
-  if(result < 0){
-    result = abs(result);
-  }
+
 
   return result;
 }
 
 /* Sets up a table of initialized one_sparse objects of size 2*s*r */
-void setup_sparse_vector(struct one_sparse* s_sparse_table, int size){
+void setup_sparse_vector(struct one_sparse* s_sparse_table, int size, int prime){
   for (int i = 0; i < size; i++){
       s_sparse_table[i].sum_of_weights = 0;
       s_sparse_table[i].sum_of_identifiers = 0;
       s_sparse_table[i].sum_of_fingerprints = 0;
+      if (prime > 0){
+        s_sparse_table[i].zeta = rand() % prime;
+      }
   }
 }
 
 /* First approach to choosing on-sparse recovery soloution*/
-void update_one_sparse_recovery(struct one_sparse* one, int64_t index, int64_t delta_freq, int zeta, int prime){
+void update_one_sparse_recovery(struct one_sparse* one, int64_t index, int64_t delta_freq, int prime){
 
-  if(prime == 0){
-    update_one_sparse_recovery_G(one, index, delta_freq);
+  if(prime > 0){
+    update_one_sparse_recovery_CF(one, index, delta_freq, prime);
   }
   else{
-    update_one_sparse_recovery_CF(one, index, delta_freq, zeta, prime);
+    update_one_sparse_recovery_G(one, index, delta_freq);
   }
 }
 
@@ -107,25 +112,25 @@ void update_one_sparse_recovery_G(struct one_sparse* one, int64_t index, int64_t
 
 /* Updates a one-sparse structure with an index and frequency */
 /* Comorode and Firmani's soloution */
-void update_one_sparse_recovery_CF(struct one_sparse* one, int64_t index, int64_t delta_freq, int z, int p){
-
-
+void update_one_sparse_recovery_CF(struct one_sparse* one, int64_t index, int64_t delta_freq, int p){
   one->sum_of_weights += delta_freq;
   one->sum_of_identifiers += index*delta_freq;
-  one->sum_of_fingerprints += ((delta_freq % p) * (power(z,index) % p)) % p;
+  one->sum_of_fingerprints += (((delta_freq) % p) * power_mod(one->zeta,index,p));
+  one->sum_of_fingerprints = one->sum_of_fingerprints % p;
 }
 
-bool test_one_sparse_recovery(struct one_sparse *one, int zeta, int prime){
-  if(prime == 0){
-    return test_one_sparse_recovery_G(one);
+bool test_one_sparse_recovery(struct one_sparse *one, int prime){
+  if(prime > 0){
+    return test_one_sparse_recovery_CF(one, prime);
   }
   else{
-    return test_one_sparse_recovery_CF(one,zeta, prime);
+    return test_one_sparse_recovery_G(one);
   }
+
 }
 
-bool test_one_sparse_recovery_CF(struct one_sparse *one, int z, int p){
-  return (one->sum_of_fingerprints == ((one->sum_of_weights % p) * (power(z, (one->sum_of_identifiers / one->sum_of_weights)) % p)) % p);
+bool test_one_sparse_recovery_CF(struct one_sparse *one, int p){
+  return (one->sum_of_fingerprints == (((one->sum_of_weights % p) * power_mod(one->zeta, (one->sum_of_identifiers / one->sum_of_weights), p)) % p));
 }
 
 bool test_one_sparse_recovery_G(struct one_sparse *one){
@@ -134,7 +139,7 @@ bool test_one_sparse_recovery_G(struct one_sparse *one){
 
 /* Updates a s-sparse structure for a specific level with an index and frequency
 ** Does this by choosing to update r one-sparse structures */
-void update_s_sparse_recovery(int* hashtable, struct one_sparse* s_sparse_table, int index, int delta_freq, int level, int s, int r, int k, int prime){
+void update_s_sparse_recovery(int* hashtable, struct one_sparse* s_sparse_table, int index, int delta_freq, int level, int k, int s, int r, int hashprime, int sprime){
   int* row_hashtable = malloc(sizeof(int) * k);
   for (int i = level*r; i < (level+1)*r; i++){
     //Chooses a level and trial unique row of primes for hashing
@@ -142,17 +147,17 @@ void update_s_sparse_recovery(int* hashtable, struct one_sparse* s_sparse_table,
       row_hashtable[j] = hashtable[i*k + j];
     }
 
-    int hashed_index = hash(row_hashtable, index, k, 2*s, prime);
-    update_one_sparse_recovery(&s_sparse_table[i*2*s + hashed_index], index, delta_freq, 0, 0);
+    int hashed_index = hash(row_hashtable, index, k, 2*s, hashprime);
+    update_one_sparse_recovery(&s_sparse_table[i*2*s + hashed_index], index, delta_freq, sprime);
   }
   free(row_hashtable);
 }
 
 /* recovers a one-sparse structure if and only if it is truly one-sparse*/
-struct one_sparse* recover_one_sparse(struct one_sparse* one){
+struct one_sparse* recover_one_sparse(struct one_sparse* one, int prime){
   //Checks if one is one-sparse
   if(one->sum_of_weights != 0){
-    if (test_one_sparse_recovery(one,0,0)){
+    if (test_one_sparse_recovery(one,prime)){
       return one;
     }
   }
@@ -163,20 +168,20 @@ struct one_sparse* recover_one_sparse(struct one_sparse* one){
 
 /* recovers a s-sparse vector of a specific level (NULL otherwise)
 ** Does this by greedily trying to recover one-sparse vectors */
-struct one_sparse* recover_vector(struct one_sparse* s_sparse_table, int s, int r, int m){
+struct one_sparse* recover_vector(struct one_sparse* s_sparse_table, int s, int r, int m, int prime){
   struct one_sparse* result = malloc(sizeof(struct one_sparse));
   struct one_sparse* s_vector = malloc(sizeof(struct one_sparse)*s);
-  setup_sparse_vector(s_vector,s);
+  setup_sparse_vector(s_vector,s,1);
   int sparse_counter = 0;
   for (int i = 0; i < m*r; i++){
     for(int j = 0; j < 2*s; j++){
-      result = recover_one_sparse(&s_sparse_table[i*2*s + j]);
+      result = recover_one_sparse(&s_sparse_table[i*2*s + j], prime);
       if(result){
         s_vector[sparse_counter] = *result;
         sparse_counter++;
         if(sparse_counter > s){
           j = 2*s;
-          setup_sparse_vector(s_vector,s);
+          setup_sparse_vector(s_vector,s,1);
           sparse_counter = 0;
         }
       }
@@ -194,17 +199,18 @@ struct one_sparse* recover_vector(struct one_sparse* s_sparse_table, int s, int 
 
 /* Reads through the stream taking the first element as the vector Length
 ** Calls the instantiation,updating and recovery functins */
-int read_stream(int k, int s, int r) {
+int read_stream(int k, int s, int r, char const* filename) {
   FILE *file;
   char *line = NULL;
   size_t len = 0;
   size_t vec_len = 0;
-  int prime1 = 10937;
-  int prime2 = 11069;
+  int prime1 = 50441;
+  int prime2 = 63671;
+  int prime3 = 0;
   //srand(seed);
   //srand(seed);
-  file = fopen("TestFile.txt", "r");
-
+  file = fopen(filename, "r");
+  //printf("hello\n");
   if (file) {
     if (getline(&line, &len, file) != -1){
 
@@ -216,39 +222,38 @@ int read_stream(int k, int s, int r) {
     int buckets = (int) pow(vec_len,3);
 
     if(buckets > prime1 || buckets > prime2){
+      printf("primes are not sufficently chosen\n");
       return 0;
     }
     // number of subvectors such that at least one level is s-sparse
     int m = (int) ((log(buckets)/log(2)) + 1);
-
     // table of random values bounded by a large prime used to hash indexs into aprroximantly geometric levels
     int* primetable = malloc(sizeof(int) * k);
     hash_create(primetable, k, prime1);
 
     // a table of 1-sparse structures
     struct one_sparse* s_sparse_table = malloc(sizeof(struct one_sparse) * 2 * s * r * m);
-    setup_sparse_vector(s_sparse_table, 2*s*r*m);
+    setup_sparse_vector(s_sparse_table, 2*s*r*m, prime3);
 
     // a family of hashes used for s-sparse recovery
     int* hashtable = malloc(sizeof(int) * k * r * m);
     hash_create(hashtable, k*r*m, prime2);
 
 
-
     // loop through the stream of updates
     while (getline(&line, &len, file) != -1) {
+
       int index = strtol(strtok(line, ","), NULL, 10);
 
       int delta_freq = strtol(strtok(NULL, ","), NULL, 10);
       int hash_index = hash(primetable, index, k, buckets, prime1);
-
       // loop through the m levels
       for (int level = 0; level < m; level ++){
         if (index_in_level(level, hash_index, buckets)){
 
-
           // update s-sparse recovery for that specific level
-          update_s_sparse_recovery(hashtable, s_sparse_table, index, delta_freq, level, s, r, k, prime2);
+          update_s_sparse_recovery(hashtable, s_sparse_table, index, delta_freq, level, k, s, r, prime2, prime3);
+
         }
       }
     }
@@ -258,7 +263,7 @@ int read_stream(int k, int s, int r) {
 
     //Recover an s-sparse vector
     struct one_sparse* final_vector = malloc(sizeof(struct one_sparse));
-    final_vector = recover_vector(s_sparse_table, s, r, m);
+    final_vector = recover_vector(s_sparse_table, s, r, m, prime3);
     free(s_sparse_table);
     if (final_vector){
       int result = (final_vector->sum_of_identifiers/final_vector->sum_of_weights);

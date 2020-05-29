@@ -10,11 +10,11 @@
 #include "count.h"
 
 
-int resevoir_sample() {
+int resevoir_sample(char const* filename) {
   FILE* file;
   char* line = NULL;
   size_t len = 0;
-  file = fopen("TestFile.txt", "r");
+  file = fopen(filename, "r");
   int result = 0;
   if (file) {
     if (getline(&line, &len, file) == -1){
@@ -39,13 +39,14 @@ int resevoir_sample() {
 int main(int argc, char const *argv[]) {
   int n = atoi(argv[1]);
   int runs = atoi(argv[2]);
+  char const* filename = argv[3];
   int size = n + 1;
   bool retry = false;
   srand(time(0));
   struct count_object* count_struct = malloc(sizeof(struct count_object));
   count_setup(count_struct, size, runs, retry);
   for(int j = 0; j < runs; j++){
-    int result = resevoir_sample();
+    int result = resevoir_sample(filename);
     //printf("result is %d\n",result);
     increase_count(count_struct, result);
   }

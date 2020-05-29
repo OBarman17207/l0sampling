@@ -17,13 +17,14 @@
 // hash and save value
 // repeat step 2 and 3
 // Should see a uniform random distribution
-int hash_prove(int index, int k, int u, int m, int p) {
+int hash_test2(int i, int k, int m, int p, int* hashtable){
+  int value = hash(hashtable, i, k, m, p);
+  if( value > m-1 || value < 0){
+    printf("value is %d\n",value);
+  }
+   //value = abs(value);
+  return value;
 
-   int* hashtable = malloc(sizeof(int)*k);
-   hash_create(hashtable,k,p);
-   int value = hash(hashtable, index, k, m, p);
-   free(hashtable);
-   return value;
 }
 
 int main(int argc, char const *argv[]) {
@@ -32,9 +33,7 @@ int main(int argc, char const *argv[]) {
   int m = atoi(argv[3]);
   int runs = atoi(argv[4]);
   int p = 4253;
-  int index = (rand() % u);
   bool retry = false;
-
   if(p < u){
     printf("bad value of prime\n");
     return 1;
@@ -43,8 +42,14 @@ int main(int argc, char const *argv[]) {
   struct count_object* count_struct = malloc(sizeof(struct count_object));
   count_setup(count_struct, m, runs, retry);
   while(count_struct->runs_left > 0){
-    int x = hash_prove(index,k,u,m,p);
-    increase_count(count_struct, x);
+    for(int i = 1; i < u+1; i++){
+      int* hashtable = malloc(sizeof(int)*k);
+      hash_create(hashtable,k,p);
+      int x = hash_test2(i,k,m,p, hashtable);
+      increase_count(count_struct, x);
+      free(hashtable);
+    }
+
   }
   print_count(count_struct);
   free(count_struct);

@@ -19,12 +19,13 @@ int main(int argc, char const *argv[]) {
   int n = atoi(argv[4]);
   int runs = atoi(argv[5]);
   bool retry = atoi(argv[6]);
+  char const* filename = argv[7];
   int size = n + 1;
   srand(time(0));
   struct count_object* count_struct = malloc(sizeof(struct count_object));
   count_setup(count_struct, size, runs, retry);
   while(count_struct->runs_left > 0){
-    int x = read_stream(k,s,r);
+    int x = read_stream(k,s,r,filename);
     increase_count(count_struct, x);
   }
   print_count(count_struct);
