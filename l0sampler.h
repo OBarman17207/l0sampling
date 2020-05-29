@@ -23,6 +23,6 @@ bool test_one_sparse_recovery_CF(struct one_sparse *one, int prime);
 void update_s_sparse_recovery(int* hashtable, struct one_sparse* s_sparse_table, int index, int delta_freq, int level, int k, int s, int r, int hashprime, int sprime);
 struct one_sparse* recover_one_sparse(struct one_sparse* one, int prime);
 struct one_sparse* recover_vector(struct one_sparse* s_sparse_table, int s, int r, int m, int prime);
-int read_stream(int k, int s, int r, char const* filename);
+int read_stream(int k, int s, int r, int sprime, char const* filename);
 
 #endif //L0SAMPLER_H_

@@ -2,8 +2,8 @@
 # Makefile for sampling and count
 #
 
-EXE1=sampling.exe
-EXE2=resevoir_sampling.exe
+EXE1=l0sampling.exe
+EXE2=reservoir_sampling.exe
 EXES=$(EXE1) $(EXE2)
 DEPS=l0sampler.c count.c
 CFLAGS=-std=c99 -Wall

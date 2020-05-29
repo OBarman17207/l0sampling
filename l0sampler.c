@@ -199,14 +199,14 @@ struct one_sparse* recover_vector(struct one_sparse* s_sparse_table, int s, int 
 
 /* Reads through the stream taking the first element as the vector Length
 ** Calls the instantiation,updating and recovery functins */
-int read_stream(int k, int s, int r, char const* filename) {
+int read_stream(int k, int s, int r, int sprime, char const* filename) {
   FILE *file;
   char *line = NULL;
   size_t len = 0;
   size_t vec_len = 0;
   int prime1 = 50441;
   int prime2 = 63671;
-  int prime3 = 0;
+  int prime3 = sprime;
   //srand(seed);
   //srand(seed);
   file = fopen(filename, "r");
